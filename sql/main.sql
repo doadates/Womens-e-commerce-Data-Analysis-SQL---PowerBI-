@@ -33,7 +33,7 @@ SELECT
 FROM womens_ecommerce;
 
 -- To avoid going in the wrong direction in Power BI analyses, I checked how I could fill department_name, class_name and division_name. 
--- But since the missing rows were the same across these columns (if one was missing, all were missing), I decided to delete them.
+-- But since the missing rows were the same across these columns (if one was missing, all were missing), I decided to set them unknown.
 
 UPDATE womens_ecommerce
 SET department_name = 'Unknown'
@@ -129,16 +129,6 @@ FROM womens_ecommerce;
 SELECT *
 FROM womens_ecommerce
 WHERE class_name= '' or class_name IS null;
-/*
-SELECT *
-FROM womens_ecommerce
-WHERE review_text LIKE '%hoodie%';
-
-SELECT review_text, department_name, class_name
-FROM womens_ecommerce
-WHERE review_text LIKE '%hoodie%'
-  AND department_name = 'Intimate';
-*/
 
 -- POWER BI VIEW CREATION
 -- AGE
@@ -154,52 +144,38 @@ SELECT
         WHEN age BETWEEN 70 AND 79 THEN '70s'
         WHEN age >= 80 THEN '80+'
         ELSE 'Unknown'
-    END AS age_group,
-    CASE
-        WHEN age BETWEEN 10 AND 19 THEN 1
-        WHEN age BETWEEN 20 AND 29 THEN 2
-        WHEN age BETWEEN 30 AND 39 THEN 3
-        WHEN age BETWEEN 40 AND 49 THEN 4
-        WHEN age BETWEEN 50 AND 59 THEN 5
-        WHEN age BETWEEN 60 AND 69 THEN 6
-        WHEN age BETWEEN 70 AND 79 THEN 7
-        WHEN age >= 80 THEN 8
-        ELSE 9
-    END AS age_group_order
+    END AS age_group
 FROM womens_ecommerce
-WHERE age IS NOT NULL AND age BETWEEN 10 AND 120;
+WHERE age IS NOT NULL AND age BETWEEN 10 AND 100;
 
 
 -- number of reviews by age distribution
 CREATE OR REPLACE VIEW age_distribution_view AS
 SELECT 
-    age_group, 
-    age_group_order, 
+    age_group,
     COUNT(*) AS review_count
 FROM age_group_view
-GROUP BY age_group, age_group_order
-ORDER BY age_group_order;
+GROUP BY age_group
+ORDER BY age_group;
 
 SELECT *
 FROM age_distribution_view;
 
 
--- departments with highest number of comments
+-- departments with highest number of reviews
+
 CREATE OR REPLACE VIEW department_review_view AS
-	SELECT department_name,	
+SELECT department_name,	
 	COUNT(*) AS review_count
-	FROM womens_ecommerce
-    GROUP BY department_name
-	ORDER BY review_count DESC;
+FROM womens_ecommerce
+GROUP BY department_name
+ORDER BY review_count DESC;
     
+
 SELECT *
 FROM department_review_view;
 
 -- Top 10 reviews with the most feedback
-SELECT clothing_id, positive_feedback_count, title, department_name, age
-FROM womens_ecommerce
-ORDER BY positive_feedback_count DESC
-LIMIT 10;
 
 CREATE OR REPLACE VIEW recommended_item_view AS
 SELECT clothing_id, positive_feedback_count, review_text, department_name, age
@@ -216,10 +192,10 @@ SELECT
   clothing_id,
   department_name,
   COUNT(*)                           AS review_count,
-  SUM(positive_feedback_count)       AS total_feedback,
-  ROUND(AVG(rating),2)               AS avg_rating
+  SUM(positive_feedback_count)       AS total_feedback
 FROM womens_ecommerce
 GROUP BY clothing_id, department_name;
+
 
 SELECT *
 FROM product_engagement_view;
@@ -230,27 +206,31 @@ WITH agg AS (
   FROM product_engagement_view
 ),
 avgvals AS (
-  SELECT AVG(review_count)  AS avg_reviews,
-         AVG(total_feedback) AS avg_feedback
+  SELECT 
+	AVG(review_count)  AS avg_reviews,
+	AVG(total_feedback) AS avg_feedback
   FROM agg
 )
 SELECT
-  a.*,
+  agg.*,
   CASE
-    WHEN a.review_count >= v.avg_reviews AND a.total_feedback <  v.avg_feedback THEN 'High reviews, Low feedback'
-    WHEN a.review_count <  v.avg_reviews AND a.total_feedback >= v.avg_feedback THEN 'Low reviews, High feedback'
-    WHEN a.review_count >= v.avg_reviews AND a.total_feedback >= v.avg_feedback THEN 'High-High'
+    WHEN agg.review_count >= avgvals.avg_reviews AND agg.total_feedback <  avgvals.avg_feedback THEN 'High reviews, Low feedback'
+    WHEN agg.review_count <  avgvals.avg_reviews AND agg.total_feedback >= avgvals.avg_feedback THEN 'Low reviews, High feedback'
+    WHEN agg.review_count >= avgvals.avg_reviews AND agg.total_feedback >= avgvals.avg_feedback THEN 'High-High'
     ELSE 'Low-Low'
   END AS quadrant
-FROM agg a
-CROSS JOIN avgvals v;
+FROM agg
+CROSS JOIN avgvals;
 
--- to find averages for Power BI
+SELECT *
+FROM product_engagement_view_quad;
 
+-- to find averages while creating scatter chart for Power BI
 -- Average number of reviews (per product)
 SELECT AVG(review_count) AS avg_reviews
 FROM (
-    SELECT clothing_id, COUNT(*) AS review_count
+    SELECT clothing_id, 
+		COUNT(*) AS review_count
     FROM womens_ecommerce
     GROUP BY clothing_id
 ) t;
@@ -258,7 +238,8 @@ FROM (
 -- Average number of positive feedback (per product)
 SELECT AVG(total_feedback) AS avg_feedback
 FROM (
-    SELECT clothing_id, SUM(positive_feedback_count) AS total_feedback
+    SELECT clothing_id, 
+		SUM(positive_feedback_count) AS total_feedback
     FROM womens_ecommerce
     GROUP BY clothing_id
 ) t;
