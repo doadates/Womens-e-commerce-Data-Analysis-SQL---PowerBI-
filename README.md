@@ -35,17 +35,17 @@ Analyze the *Women’s Clothing E-Commerce Reviews* dataset using SQL for data m
 
 Connect to your MySQL database:
 
-Server: localhost:3306
+Server: localhost
 
 Database: ecommerce
 
 Use your DB credentials
 
 Load the following views:
-age_distribution_view
-product_engagement_view_quad
-department_review_view
-recommended_item_view
-top_feedback_dep_cust_view
+- age_distribution_view
+- product_engagement_view_quad
+- department_review_view
+- recommended_item_view
+- top_feedback_dep_cust_view
 
 Recreate visuals (bar, pie, donut, scatter with zoom sliders, constant lines for averages).
