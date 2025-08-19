@@ -18,8 +18,8 @@ Analyze the *Women’s Clothing E-Commerce Reviews* dataset using SQL for data m
 
 ## 📁 Repository Structure
 /sql -> all SQL scripts (views, cleaning, indexes)
+
 /powerbi -> Power BI file (.pbix) & screenshots
-/data -> dataset csv file
 
 ---
 
