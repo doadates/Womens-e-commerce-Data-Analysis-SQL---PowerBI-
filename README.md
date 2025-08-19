@@ -47,5 +47,8 @@ Load the following views:
 - department_review_view
 - recommended_item_view
 - top_feedback_dep_cust_view
+- 
+<img width="1568" height="903" alt="image" src="https://github.com/user-attachments/assets/2ff87e9c-ecc7-4d1a-a9df-18a2c8f7283a" />
+
 
 Recreate visuals (bar, pie, donut, scatter with zoom sliders, constant lines for averages).
